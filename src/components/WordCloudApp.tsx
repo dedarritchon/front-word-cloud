@@ -25,10 +25,7 @@ const MainContent = styled.div`
   margin: 0 auto;
   flex-direction: row;
   padding: 1rem;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
+  flex-direction: column;
 `;
 
 const WordCloudSection = styled.div`
@@ -41,12 +38,7 @@ const WordCloudSection = styled.div`
 `;
 
 const SettingsSection = styled.div`
-  width: 400px;
   flex-shrink: 0;
-  
-  @media (max-width: 768px) {
-    width: 100%;
-  }
 `;
 
 const ErrorState = styled.div`

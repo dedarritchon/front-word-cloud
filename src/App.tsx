@@ -4,6 +4,8 @@ import { FrontContextProvider } from './context/FrontContextProvider';
 import { ConversationProvider } from './context/ConversationContext';
 import { StopWordsProvider } from './context/StopWordsContext';
 import { ColorContextProvider } from './context/ColorContext';
+import { SpiralProvider } from './context/SpiralContext';
+import { RotationContextProvider } from './context/RotationContext';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -17,9 +19,13 @@ function App() {
       <ConversationProvider>
         <StopWordsProvider>
           <ColorContextProvider>
-            <AppContainer>
-              <WordCloudApp />
-            </AppContainer>
+            <SpiralProvider>
+              <RotationContextProvider>
+                <AppContainer>
+                  <WordCloudApp />
+                </AppContainer>
+              </RotationContextProvider>
+            </SpiralProvider>
           </ColorContextProvider>
         </StopWordsProvider>
       </ConversationProvider>

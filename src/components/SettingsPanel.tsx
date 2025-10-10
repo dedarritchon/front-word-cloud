@@ -10,6 +10,8 @@ import {
 import { useConversationContext } from '../context/ConversationContext';
 import StopWordsPills from './StopWordsPills';
 import ColorPicker from './ColorPicker';
+import SpiralSelector from './SpiralSelector';
+import RotationSelector from './RotationSelector';
 
 interface SettingsPanelProps {
   className?: string;
@@ -158,11 +160,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     conversationContext.clearAll();
   };
 
-  const totalConversations = conversationContext.state.conversations.length;
-  const totalMessages = conversationContext.state.conversations.reduce((acc, conv) => acc + conv.messages.length, 0);
+  const activeConversations = conversationContext.getActiveConversations();
+  const totalConversations = activeConversations.length;
+  const totalMessages = activeConversations.reduce((acc, conv) => acc + conv.messages.length, 0);
   
-  // Calculate word counts
-  const totalWords = conversationContext.state.conversations.reduce((acc, conv) => 
+  // Calculate word counts from active conversations only
+  const totalWords = activeConversations.reduce((acc, conv) => 
     acc + conv.messages.reduce((msgAcc, msg) => msgAcc + (msg.content?.split(' ').length || 0), 0), 0);
 
   return (
@@ -233,10 +236,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             )}
           </AccordionSection>
           <AccordionSection
-            id="colors"
-            title="Color Configuration"
+            id="wordcloud-config"
+            title="Word Cloud Configuration"
           >
             <ColorPicker />
+            <SpiralSelector />
+            <RotationSelector />
           </AccordionSection>
           <AccordionSection
             id="stopwords"

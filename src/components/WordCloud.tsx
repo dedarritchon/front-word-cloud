@@ -5,6 +5,8 @@ import { WordCloudData, WordCloudConfig } from '../types/wordCloud';
 import { Button, VisualSizesEnum } from '@frontapp/ui-kit';
 import { FaDownload } from 'react-icons/fa';
 import { useColorContext } from '../context/ColorContext';
+import { useSpiralContext } from '../context/SpiralContext';
+import { useRotationContext } from '../context/RotationContext';
 
 interface WordCloudComponentProps {
   data: WordCloudData[];
@@ -47,6 +49,8 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const colorContext = useColorContext();
+  const spiralContext = useSpiralContext();
+  const rotationContext = useRotationContext();
   const [downloadOptions] = useState({
     transparent: true,
     highQuality: true
@@ -106,6 +110,23 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
     );
   }, [words.length]);
 
+  // Memoize the rotation function based on the selected pattern
+  const rotationFunction = useMemo(() => {
+    const pattern = rotationContext.state.pattern;
+    
+    switch (pattern) {
+      case 'none':
+        return () => 0;
+      case 'mixed':
+        const mixedAngles = [0, 90, 180, 270];
+        return () => mixedAngles[Math.floor(Math.random() * mixedAngles.length)];
+      case 'random':
+        return () => Math.floor(Math.random() * 360);
+      default:
+        return () => 0;
+    }
+  }, [rotationContext.state.pattern]);
+
   // Create animated word renderer with staggered animation delays
   const animatedWordRenderer: WordCloudProps["renderWord"] = useMemo(() => {
     return (data, ref) => (
@@ -125,7 +146,7 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
     
     return (
       <WordCloud
-        key={`wordcloud-${colorContext.state.colors.join(',')}-${colorContext.state.gradientSteps}-${colorContext.state.colorMode}`}
+        key={`wordcloud-${colorContext.state.colors.join(',')}-${colorContext.state.gradientSteps}-${colorContext.state.colorMode}-${spiralContext.state.spiral}-${rotationContext.state.pattern}`}
         ref={svgRef}
         words={words}
         width={config.width}
@@ -134,11 +155,12 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
         padding={2} // Smaller padding for more words
         fill={fillFunction}
         enableTooltip
-        spiral="archimedean" // Better spiral for more words
+        spiral={spiralContext.state.spiral}
+        rotate={rotationFunction}
         renderWord={animatedWordRenderer}
       />
     );
-  }, [words, fillFunction, fontSizeFunction, animatedWordRenderer, colorContext.state.colors, colorContext.state.gradientSteps, colorContext.state.colorMode, config.width, config.height, data]);
+  }, [words, fillFunction, fontSizeFunction, rotationFunction, animatedWordRenderer, colorContext.state.colors, colorContext.state.gradientSteps, colorContext.state.colorMode, spiralContext.state.spiral, rotationContext.state.pattern, config.width, config.height, data]);
 
   // Download PNG functionality
   const downloadPNG = async () => {

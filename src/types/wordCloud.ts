@@ -17,6 +17,7 @@ export interface WordCloudConfig {
   rotationAngles: number[];
   colors: string[];
   backgroundColor: string;
+  spiral: 'archimedean' | 'rectangular';
 }
 
 export interface WordCloudSettings {
