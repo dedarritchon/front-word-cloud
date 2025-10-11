@@ -12,16 +12,17 @@ import StopWordsPills from './StopWordsPills';
 import ColorPicker from './ColorPicker';
 import SpiralSelector from './SpiralSelector';
 import RotationSelector from './RotationSelector';
+import { WordCloudData } from '../types/wordCloud';
 
 interface SettingsPanelProps {
   className?: string;
+  wordCloudData?: WordCloudData[];
 }
 
 const SettingsContainer = styled.div`
   padding: 1rem;
   background-color: #fafbfc;
   border-radius: 8px;
-  border: 1px solid #e1e5e9;
   overflow-x: hidden;
 `;
 
@@ -60,7 +61,7 @@ const ConversationActions = styled.div`
 `;
 
 const ClearAllButton = styled(Button)`
-  margin-top: 0.5rem;
+  margin: 0.2rem;
 `;
 
 
@@ -96,19 +97,6 @@ const StatLabel = styled.div`
   color: #6c757d;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-`;
-
-const StatusBadge = styled.span<{ active: boolean }>`
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background-color: ${props => props.active ? '#d4edda' : '#fff3cd'};
-  color: ${props => props.active ? '#155724' : '#856404'};
-  border: 1px solid ${props => props.active ? '#c3e6cb' : '#ffeaa7'};
 `;
 
 const ConversationHeader = styled.div`
@@ -149,6 +137,7 @@ const Scrollable = styled.div`
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
   className,
+  wordCloudData = [],
 }) => {
   const conversationContext = useConversationContext();
 
@@ -164,9 +153,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const totalConversations = activeConversations.length;
   const totalMessages = activeConversations.reduce((acc, conv) => acc + conv.messages.length, 0);
   
-  // Calculate word counts from active conversations only
-  const totalWords = activeConversations.reduce((acc, conv) => 
-    acc + conv.messages.reduce((msgAcc, msg) => msgAcc + (msg.content?.split(' ').length || 0), 0), 0);
+  const totalWords = wordCloudData.reduce((acc, word) => acc + word.weight, 0);
 
   return (
     <SettingsContainer className={className}>
@@ -191,7 +178,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <Accordion>
           <AccordionSection
             id="conversations"
-            title="Conversations"
+            title="Included Conversations"
           >
             {conversationContext.state.conversations.length === 0 ? (
               <p style={{ fontSize: '0.9rem', color: '#6c757d' }}>
@@ -213,9 +200,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         <ConversationTitle>
                           {conversation.title || conversation.conversation_id}
                         </ConversationTitle>
-                        <StatusBadge active={conversation.active}>
-                          {conversation.active ? 'Active' : 'Inactive'}
-                        </StatusBadge>
                       </ConversationHeader>
                       <ConversationDetails>
                         <DetailRow>

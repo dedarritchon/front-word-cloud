@@ -204,7 +204,7 @@ const WordCloudApp: React.FC = () => {
             )}
           </WordCloudSection>
           <SettingsSection>
-            <SettingsPanel />
+            <SettingsPanel wordCloudData={wordCloudData} />
           </SettingsSection>
         </MainContent>
       </PluginLayout>

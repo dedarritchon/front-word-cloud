@@ -7,6 +7,7 @@ import { FaDownload } from 'react-icons/fa';
 import { useColorContext } from '../context/ColorContext';
 import { useSpiralContext } from '../context/SpiralContext';
 import { useRotationContext } from '../context/RotationContext';
+import { useStopWordsContext } from '../context/StopWordsContext';
 
 interface WordCloudComponentProps {
   data: WordCloudData[];
@@ -45,12 +46,26 @@ const WordCloudWrapper = styled.div`
   height: 100%;
 `;
 
+const HelpTextContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const HelpText = styled.div`
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+  padding-top: 1rem;
+`;
+
 const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, className }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const colorContext = useColorContext();
   const spiralContext = useSpiralContext();
   const rotationContext = useRotationContext();
+  const stopWordsContext = useStopWordsContext();
   const [downloadOptions] = useState({
     transparent: true,
     highQuality: true
@@ -84,24 +99,24 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
     
     if (wordCount <= 30) {
       // Very few words - use most of the space
-      scaleFactor = 1.2;
-      maxSize = 120;
-      minSize = 24;
+      scaleFactor = 2.0; // Increased from 1.2
+      maxSize = 150; // Increased from 120
+      minSize = 32; // Increased from 24
     } else if (wordCount <= 60) {
       // Few words - use more space
-      scaleFactor = 0.8;
-      maxSize = 80;
-      minSize = 18;
+      scaleFactor = 1.5; // Increased from 0.8
+      maxSize = 100; // Increased from 80
+      minSize = 24; // Increased from 18
     } else if (wordCount <= 100) {
       // Moderate number of words
-      scaleFactor = 0.5;
-      maxSize = 60;
-      minSize = 14;
+      scaleFactor = 1.0; // Increased from 0.5
+      maxSize = 80; // Increased from 60
+      minSize = 18; // Increased from 14
     } else {
       // Many words - use less space per word
-      scaleFactor = 0.3;
-      maxSize = 45;
-      minSize = 12;
+      scaleFactor = 0.6; // Increased from 0.3
+      maxSize = 60; // Increased from 45
+      minSize = 16; // Increased from 12
     }
     
     return (word: Word) => Math.max(
@@ -138,6 +153,11 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
     );
   }, []);
 
+  // Handle word click to add word to stop words
+  const onWordClick = (word: Word) => {
+    stopWordsContext.addStopWord(word.text);
+  };
+
   // Memoize the entire WordCloud component to prevent unnecessary re-renders
   const memoizedWordCloud = useMemo(() => {
     if (!data || data.length === 0) {
@@ -158,9 +178,10 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
         spiral={spiralContext.state.spiral}
         rotate={rotationFunction}
         renderWord={animatedWordRenderer}
+        onWordClick={onWordClick}
       />
     );
-  }, [words, fillFunction, fontSizeFunction, rotationFunction, animatedWordRenderer, colorContext.state.colors, colorContext.state.gradientSteps, colorContext.state.colorMode, spiralContext.state.spiral, rotationContext.state.pattern, config.width, config.height, data]);
+  }, [words, fillFunction, fontSizeFunction, rotationFunction, animatedWordRenderer, onWordClick, colorContext.state.colors, colorContext.state.gradientSteps, colorContext.state.colorMode, spiralContext.state.spiral, rotationContext.state.pattern, config.width, config.height, data]);
 
   // Download PNG functionality
   const downloadPNG = async () => {
@@ -248,6 +269,11 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
             Load conversations to see the word cloud.
           </div>
         )}
+        <HelpTextContainer>
+          <HelpText>
+            Click on a word to remove (add to stop words).
+          </HelpText>
+        </HelpTextContainer>
       </WordCloudWrapper>
     </WordCloudContainer>
   );

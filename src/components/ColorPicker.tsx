@@ -8,9 +8,6 @@ const ColorPickerContainer = styled.div`
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e1e5e9;
 `;
 
 const Label = styled.label`
@@ -201,6 +198,13 @@ const ResetButton = styled(Button)`
   font-size: 0.8rem;
 `;
 
+const Description = styled.div`
+  font-size: 0.85rem;
+  color: #6c757d;
+  line-height: 1.4;
+  margin: 0.2rem;
+`;
+
 const ColorPicker: React.FC = () => {
   const { state, setBaseColor, setBaseColorImmediate, setBaseColorPreview, setGradientSteps, setColorMode, resetToDefault, generateGradient } = useColorContext();
 
@@ -249,6 +253,9 @@ const ColorPicker: React.FC = () => {
 
   return (
     <ColorPickerContainer>
+      <Description>
+        Choose the color and gradient settings for the word cloud:
+      </Description>
       <div>
         <Label>Gradient Preview</Label>
         <GradientPreview>

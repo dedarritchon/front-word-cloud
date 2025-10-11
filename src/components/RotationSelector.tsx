@@ -6,13 +6,14 @@ import { useRotationContext, RotationPattern } from '../context/RotationContext'
 const RotationSelectorContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.2rem;
 `;
 
 const Description = styled.div`
   font-size: 0.85rem;
   color: #6c757d;
   line-height: 1.4;
+  margin: 0.2rem;
 `;
 
 const RotationSelector: React.FC = () => {
@@ -41,6 +42,7 @@ const RotationSelector: React.FC = () => {
       <Description>
         Choose the rotation pattern for words in the cloud:
       </Description>
+      <div style={{ width: 'fit-content', marginBottom: '0.2rem' }}>
       <Select
         selectedValues={rotationOptions.find(option => option.value === state.pattern)?.label}
         layerRootId="rotation-selector"
@@ -56,6 +58,7 @@ const RotationSelector: React.FC = () => {
           </SelectItem>
         ))}
       </Select>
+      </div>
     </RotationSelectorContainer>
   );
 };

@@ -75,6 +75,7 @@ const AddButton = styled(Button)`
 `;
 
 const ResetButton = styled(Button)`
+  margin-top: 0.2rem;
   align-self: flex-start;
 `;
 

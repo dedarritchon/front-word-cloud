@@ -35,7 +35,7 @@ export function generateWordCloudData(text: string, maxWords: number = 100, stop
   return Object.entries(wordCount)
     .map(([text, count], index) => ({
       text,
-      weight: count * 10, // Scale up for better visualization
+      weight: count,
       color: colors[index % colors.length]
     }))
     .sort((a, b) => b.weight - a.weight)
