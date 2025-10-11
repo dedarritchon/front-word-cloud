@@ -49,9 +49,6 @@ const ErrorState = styled.div`
   min-height: 400px;
   padding: 2rem;
   text-align: center;
-  background-color: #fafbfc;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
   color: #6c757d;
 `;
 
