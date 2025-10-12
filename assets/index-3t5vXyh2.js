@@ -540,7 +540,6 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
   align-items: center;
   padding: 1rem;
   margin-top: auto;
-  background-color: var(--background);
   position: fixed;
   bottom: 0;
   justify-self: end;
