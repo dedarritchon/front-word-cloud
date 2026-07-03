@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Word, WordCloud, WordCloudProps, AnimatedWordRenderer } from '@isoterik/react-word-cloud';
 import { WordCloudData, WordCloudConfig } from '../types/wordCloud';
 import { Button, VisualSizesEnum } from '@frontapp/ui-kit';
-import { FaExternalLinkAlt, FaClipboard, FaCheck } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaClipboard, FaCheck, FaTimesCircle } from 'react-icons/fa';
 import { useColorContext } from '../context/ColorContext';
 import { useSpiralContext } from '../context/SpiralContext';
 import { useRotationContext } from '../context/RotationContext';
@@ -68,7 +68,7 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
   const rotationContext = useRotationContext();
   const stopWordsContext = useStopWordsContext();
   const [isOpening, setIsOpening] = useState(false);
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'copied'> ('idle');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'copied' | 'failed'>('idle');
 
   // Memoize the words array to prevent unnecessary re-renders
   const words: Word[] = useMemo(() => {
@@ -249,7 +249,8 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
       setTimeout(() => setCopyStatus('idle'), 2500);
     } catch (error) {
       console.error('Error copying to clipboard:', error);
-      setCopyStatus('idle');
+      setCopyStatus('failed');
+      setTimeout(() => setCopyStatus('idle'), 2500);
     }
   };
 
@@ -279,8 +280,10 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
               >
                 {copyStatus === 'copied'
                   ? <FaCheck style={{ marginRight: '0.5rem' }} />
-                  : <FaClipboard style={{ marginRight: '0.5rem' }} />}
-                {copyStatus === 'copied' ? 'Copied!' : copyStatus === 'copying' ? 'Copying…' : 'Copy to Clipboard'}
+                  : copyStatus === 'failed'
+                    ? <FaTimesCircle style={{ marginRight: '0.5rem' }} />
+                    : <FaClipboard style={{ marginRight: '0.5rem' }} />}
+                {copyStatus === 'copied' ? 'Copied!' : copyStatus === 'copying' ? 'Copying…' : copyStatus === 'failed' ? 'Failed to Copy' : 'Copy to Clipboard'}
               </Button>
             )}
           </DownloadButtonContainer>
