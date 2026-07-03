@@ -12,6 +12,7 @@ import { FrontContext } from '../context/FrontContext';
 import { useConversationContext } from '../context/ConversationContext';
 import { useStopWordsContext } from '../context/StopWordsContext';
 import { useColorContext } from '../context/ColorContext';
+import { useMinOccurrencesContext } from '../context/MinOccurrencesContext';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -174,6 +175,7 @@ const WordCloudApp: React.FC = () => {
   const conversationContext = useConversationContext();
   const stopWordsContext = useStopWordsContext();
   const colorContext = useColorContext();
+  const minOccurrencesContext = useMinOccurrencesContext();
   const config = defaultWordCloudConfig;
 
   // Fetch conversation messages and add to global state
@@ -262,11 +264,11 @@ const WordCloudApp: React.FC = () => {
       .join(' ');
 
     if (allText.trim()) {
-      return generateWordCloudData(allText, config.maxWords, stopWordsContext.state.stopWords, colorContext.state.colors);
+      return generateWordCloudData(allText, config.maxWords, stopWordsContext.state.stopWords, colorContext.state.colors, minOccurrencesContext.state.minOccurrences);
     } else {
       return []; // Return empty array instead of sample data
     }
-  }, [finalMessages, config.maxWords, stopWordsContext.state.stopWords, colorContext.state.colors]);
+  }, [finalMessages, config.maxWords, stopWordsContext.state.stopWords, colorContext.state.colors, minOccurrencesContext.state.minOccurrences]);
 
   useEffect(() => {
     fetchMessagesAndAddToState();

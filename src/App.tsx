@@ -6,6 +6,7 @@ import { StopWordsProvider } from './context/StopWordsContext';
 import { ColorContextProvider } from './context/ColorContext';
 import { SpiralProvider } from './context/SpiralContext';
 import { RotationContextProvider } from './context/RotationContext';
+import { MinOccurrencesProvider } from './context/MinOccurrencesContext';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -21,9 +22,11 @@ function App() {
           <ColorContextProvider>
             <SpiralProvider>
               <RotationContextProvider>
-                <AppContainer>
-                  <WordCloudApp />
-                </AppContainer>
+                <MinOccurrencesProvider>
+                  <AppContainer>
+                    <WordCloudApp />
+                  </AppContainer>
+                </MinOccurrencesProvider>
               </RotationContextProvider>
             </SpiralProvider>
           </ColorContextProvider>

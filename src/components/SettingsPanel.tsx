@@ -12,6 +12,7 @@ import StopWordsPills from './StopWordsPills';
 import ColorPicker from './ColorPicker';
 import SpiralSelector from './SpiralSelector';
 import RotationSelector from './RotationSelector';
+import MinOccurrencesSelector from './MinOccurrencesSelector';
 import { WordCloudData } from '../types/wordCloud';
 
 interface SettingsPanelProps {
@@ -226,6 +227,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <ColorPicker />
             <SpiralSelector />
             <RotationSelector />
+            <MinOccurrencesSelector />
           </AccordionSection>
           <AccordionSection
             id="stopwords"

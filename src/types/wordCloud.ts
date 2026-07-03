@@ -14,6 +14,7 @@ export interface WordCloudConfig {
   minFontSize: number;
   maxFontSize: number;
   maxWords: number;
+  minOccurrences: number;
   rotationAngles: number[];
   colors: string[];
   backgroundColor: string;
