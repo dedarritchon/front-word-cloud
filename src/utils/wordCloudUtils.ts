@@ -9,7 +9,7 @@ export const defaultWordCloudConfig: WordCloudConfig = {
   fontSize: 2000,
   minFontSize: 100,
   maxFontSize: 2000,
-  maxWords: 150,
+  maxWords: 500,
   rotationAngles: [0, 90, -90],
   colors: ['#1a365d', '#2c5282', '#2b6cb0', '#3182ce', '#4299e1', '#63b3ed', '#4c51bf', '#553c9a', '#6b46c1', '#805ad5'],
   backgroundColor: '#ffffff',
