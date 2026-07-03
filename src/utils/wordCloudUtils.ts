@@ -16,36 +16,46 @@ export const defaultWordCloudConfig: WordCloudConfig = {
   spiral: 'archimedean',
 };
 
-export function generateWordCloudData(text: string, maxWords: number = 100, stopWords: Set<string> = new Set(), colors: string[] = defaultWordCloudConfig.colors): WordCloudData[] {
-  // Improved text processing with stopwords removal
-  const words = text
-    .split(/[\s.]+/g)
-    .map(w => w.replace(/^["'"\-—()\[\]{}]+/g, ""))
-    .map(w => w.replace(/[;:.!?()\[\]{},"''"\-—]+$/g, ""))
-    .map(w => w.replace(/['']s$/g, ""))
-    .map(w => w.substring(0, 30))
-    .map(w => w.toLowerCase())
-    .filter(w => w && !stopWords.has(w) && w.length > 2); // Filter out very short words
+const LEADING_PUNCT = /^["'"\-—()\[\]{}!?]+/g;
+const TRAILING_PUNCT = /[;:.!?()\[\]{},"''"\-—]+$/g;
+const POSSESSIVE = /['']s$/;
+const WHITESPACE_OR_PERIOD = /[\s.!?]+/;
 
+export function generateWordCloudData(
+  text: string,
+  maxWords: number = 100,
+  stopWords: Set<string> = new Set(),
+  colors: string[] = defaultWordCloudConfig.colors,
+): WordCloudData[] {
+  const tokens = text.split(WHITESPACE_OR_PERIOD);
   const wordCount: Record<string, number> = {};
-  words.forEach(word => {
-    wordCount[word] = (wordCount[word] || 0) + 1;
-  });
+
+  for (let i = 0; i < tokens.length; i++) {
+    let w = tokens[i]
+      .replace(LEADING_PUNCT, '')
+      .replace(TRAILING_PUNCT, '');
+
+    if (POSSESSIVE.test(w)) {
+      w = w.slice(0, -2);
+    }
+
+    if (w.length > 30) {
+      w = w.substring(0, 30);
+    }
+
+    w = w.toLowerCase();
+
+    if (w.length > 1 && !stopWords.has(w)) {
+      wordCount[w] = (wordCount[w] || 0) + 1;
+    }
+  }
 
   return Object.entries(wordCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, maxWords)
     .map(([text, count], index) => ({
       text,
       weight: count,
-      color: colors[index % colors.length]
-    }))
-    .sort((a, b) => b.weight - a.weight)
-    .slice(0, maxWords); // Configurable limit for word cloud
-}
-
-export function validateWordCloudData(data: WordCloudData[]): boolean {
-  return Array.isArray(data) && data.every(item => 
-    typeof item.text === 'string' && 
-    typeof item.weight === 'number' && 
-    item.weight > 0
-  );
+      color: colors[index % colors.length],
+    }));
 }

@@ -1,11 +1,12 @@
-import React, { useState, useContext, useEffect, useMemo } from 'react';
-import styled from 'styled-components';
+import React, { useContext, useEffect, useMemo } from 'react';
+import styled, { keyframes } from 'styled-components';
 import {
   PluginLayout,
 } from '@frontapp/ui-kit';
+import { ApplicationMessage, ApplicationPaginationToken } from '@frontapp/ui-bridge';
 import WordCloud from './WordCloud';
 import SettingsPanel from './SettingsPanel';
-import { WordCloudConfig, ConversationMessage } from '../types/wordCloud';
+import { ConversationMessage } from '../types/wordCloud';
 import { defaultWordCloudConfig, generateWordCloudData } from '../utils/wordCloudUtils';
 import { FrontContext } from '../context/FrontContext';
 import { useConversationContext } from '../context/ConversationContext';
@@ -20,12 +21,11 @@ const AppContainer = styled.div`
 
 const MainContent = styled.div`
   display: flex;
+  flex-direction: column;
   gap: 2rem;
   max-width: 1400px;
   margin: 0 auto;
-  flex-direction: row;
   padding: 1rem;
-  flex-direction: column;
 `;
 
 const WordCloudSection = styled.div`
@@ -41,6 +41,48 @@ const SettingsSection = styled.div`
   flex-shrink: 0;
 `;
 
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
+const LoadingState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+  color: var(--text-secondary);
+`;
+
+const Spinner = styled.div`
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--border);
+  border-top-color: var(--text-link);
+  border-radius: 50%;
+  animation: ${spin} 0.8s linear infinite;
+`;
+
+const LoadingText = styled.p`
+  font-size: 0.95rem;
+  margin: 0;
+`;
+
+const ErrorBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: color-mix(in srgb, var(--error) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
+  border-radius: 6px;
+  color: var(--error);
+  font-size: 0.9rem;
+  width: 100%;
+`;
+
 const ErrorState = styled.div`
   display: flex;
   flex-direction: column;
@@ -49,7 +91,7 @@ const ErrorState = styled.div`
   min-height: 400px;
   padding: 2rem;
   text-align: center;
-  color: #6c757d;
+  color: var(--text-secondary);
 `;
 
 const ErrorIcon = styled.div`
@@ -61,7 +103,7 @@ const ErrorIcon = styled.div`
 const ErrorTitle = styled.h3`
   font-size: 1.25rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--text-primary);
   margin: 0 0 0.5rem 0;
 `;
 
@@ -78,7 +120,6 @@ const Footer = styled.footer`
   align-items: center;
   padding: 1rem;
   margin-top: auto;
-  background-color: var(--background);
   position: fixed;
   bottom: 0;
   justify-self: end;
@@ -133,7 +174,7 @@ const WordCloudApp: React.FC = () => {
   const conversationContext = useConversationContext();
   const stopWordsContext = useStopWordsContext();
   const colorContext = useColorContext();
-  const [config] = useState<WordCloudConfig>(defaultWordCloudConfig);
+  const config = defaultWordCloudConfig;
 
   // Fetch conversation messages and add to global state
   const fetchMessagesAndAddToState = async () => {
@@ -150,8 +191,8 @@ const WordCloudApp: React.FC = () => {
     conversationContext.setError(null);
 
     try {
-      const allMessages: any[] = [];
-      let nextPaginationToken: any = undefined;
+      const allMessages: ApplicationMessage[] = [];
+      let nextPaginationToken: ApplicationPaginationToken | undefined = undefined;
 
       // Paginate through all messages in the conversation
       do {
@@ -160,33 +201,31 @@ const WordCloudApp: React.FC = () => {
         nextPaginationToken = messageList.nextPageToken;
       } while (nextPaginationToken);
 
-      // Convert messages to our format
+      // Convert messages to our format, stripping HTML when content type is 'html'
       const conversationMessages: ConversationMessage[] = allMessages
         .map((message, index) => {
-          // Handle different message types and extract text from HTML
           let textContent = '';
-          
-          if (message.content?.body && typeof message.content.body === 'string') {
-            textContent = message.content.body;
-          } else if (message.body && typeof message.body === 'string') {
-            textContent = message.body;
-          } else if (message.text && typeof message.text === 'string') {
-            textContent = message.text;
+
+          if (message.content?.body) {
+            if (message.content.type === 'html') {
+              // Replace block-level boundaries with a space BEFORE stripping tags
+              // so that "word.</p><p>next" doesn't collapse into "word.next"
+              const spaced = message.content.body
+                .replace(/<br\s*\/?>/gi, ' ')
+                .replace(/<\/?(p|div|li|ul|ol|h[1-6]|blockquote|pre|tr|td|th|section|article|header|footer)[^>]*>/gi, ' ');
+              const tempDiv = document.createElement('div');
+              tempDiv.innerHTML = spaced;
+              textContent = tempDiv.textContent || tempDiv.innerText || '';
+            } else {
+              textContent = message.content.body;
+            }
           }
-          
-          // Strip HTML tags and extract plain text
-          if (textContent) {
-            // Create a temporary DOM element to parse HTML
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = textContent;
-            textContent = tempDiv.textContent || tempDiv.innerText || '';
-          }
-          
+
           return {
-            id: message.id || `msg-${index}`,
+            id: String(message.id) || `msg-${index}`,
             content: textContent,
-            timestamp: message.created_at || message.timestamp,
-            author: message.author?.name || message.author?.email,
+            timestamp: message.date?.toISOString(),
+            author: message.from?.name || message.from?.handle,
           };
         })
         .filter(message => message.content.trim().length > 0);
@@ -239,22 +278,38 @@ const WordCloudApp: React.FC = () => {
     frontContext.type !== 'singleConversation' || 
     !frontContext.conversation?.id;
 
+  const renderCloudSection = () => {
+    if (conversationContext.state.isLoading) {
+      return (
+        <LoadingState>
+          <Spinner />
+          <LoadingText>Loading conversation messages…</LoadingText>
+        </LoadingState>
+      );
+    }
+    if (hasNoConversation && wordCloudData.length === 0) {
+      return (
+        <ErrorState>
+          <ErrorIcon>💬</ErrorIcon>
+          <ErrorTitle>No Conversation Selected</ErrorTitle>
+          <ErrorMessage>
+            Please select a conversation to generate a word cloud from its messages.
+          </ErrorMessage>
+        </ErrorState>
+      );
+    }
+    return <WordCloud data={wordCloudData} config={config} />;
+  };
+
   return (
     <AppContainer>
       <PluginLayout>
         <MainContent>
           <WordCloudSection>
-            {hasNoConversation && wordCloudData.length === 0 ? (
-              <ErrorState>
-                <ErrorIcon>💬</ErrorIcon>
-                <ErrorTitle>No Conversation Selected</ErrorTitle>
-                <ErrorMessage>
-                  Please select a conversation to generate a word cloud from its messages.
-                </ErrorMessage>
-              </ErrorState>
-            ) : (
-              <WordCloud data={wordCloudData} config={config} />
+            {conversationContext.state.error && (
+              <ErrorBanner>⚠️ {conversationContext.state.error}</ErrorBanner>
             )}
+            {renderCloudSection()}
           </WordCloudSection>
           <SettingsSection>
             <SettingsPanel wordCloudData={wordCloudData} />

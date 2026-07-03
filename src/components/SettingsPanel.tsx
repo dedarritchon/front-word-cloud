@@ -21,7 +21,7 @@ interface SettingsPanelProps {
 
 const SettingsContainer = styled.div`
   padding: 1rem;
-  background-color: #fafbfc;
+  background-color: var(--surface);
   border-radius: 8px;
   overflow-x: hidden;
 `;
@@ -36,15 +36,15 @@ const ConversationItem = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem;
-  border: 1px solid #e1e5e9;
+  border: 1px solid var(--border);
   border-radius: 4px;
   margin-bottom: 0.5rem;
   margin-top: 0.5rem;
-  background-color: #ffffff;
+  background-color: var(--background);
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: #f8f9fa;
+    background-color: var(--surface-hover);
   }
 `;
 
@@ -88,13 +88,13 @@ const StatItem = styled.div`
 
 const StatValue = styled.div`
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--text-primary);
   margin-bottom: 0.25rem;
 `;
 
 const StatLabel = styled.div`
   font-size: 0.75rem;
-  color: #6c757d;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;
@@ -110,7 +110,7 @@ const ConversationTitle = styled.p`
   font-size: 0.9rem;
   font-weight: 500;
   margin: 0;
-  color: #2c3e50;
+  color: var(--text-primary);
   flex: 1;
 `;
 
@@ -125,7 +125,7 @@ const DetailRow = styled.div`
   align-items: center;
   gap: 0.5rem;
   font-size: 0.8rem;
-  color: #6c757d;
+  color: var(--text-secondary);
 `;
 
 
@@ -153,7 +153,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const totalConversations = activeConversations.length;
   const totalMessages = activeConversations.reduce((acc, conv) => acc + conv.messages.length, 0);
   
-  const totalWords = wordCloudData.reduce((acc, word) => acc + word.weight, 0);
+  const totalWords = wordCloudData.length;
 
   return (
     <SettingsContainer className={className}>
@@ -169,7 +169,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </StatItem>
           <StatItem>
             <StatValue>{totalWords.toLocaleString()}</StatValue>
-            <StatLabel>Words</StatLabel>
+            <StatLabel>Unique Words</StatLabel>
           </StatItem>
         </StatisticsContainer>
       </Section>
@@ -181,8 +181,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             title="Included Conversations"
           >
             {conversationContext.state.conversations.length === 0 ? (
-              <p style={{ fontSize: '0.9rem', color: '#6c757d' }}>
-                No conversations loaded yet. Use the "Load Current Conversation" button to add conversations.
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                No conversations loaded yet. Select a conversation in Front and it will load automatically.
               </p>
             ) : (
               <>

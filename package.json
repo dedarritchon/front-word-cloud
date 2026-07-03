@@ -20,16 +20,11 @@
     "@frontapp/plugin-sdk": "^1.7.0",
     "@frontapp/ui-kit": "^0.9.0",
     "@isoterik/react-word-cloud": "^1.2.0",
-    "@types/d3": "^7.4.3",
-    "@types/d3-cloud": "^1.2.9",
     "chroma-js": "^3.1.2",
-    "d3": "^7.9.0",
-    "d3-cloud": "^1.2.7",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-icons": "^5.3.0",
-    "styled-components": "^6.1.19",
-    "wordcloud": "^1.2.2"
+    "styled-components": "^6.1.19"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
@@ -40,7 +35,6 @@
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
-    "@types/wordcloud": "^1.1.4",
     "@vitejs/plugin-react": "^5.0.0",
     "eslint": "^9.33.0",
     "eslint-config-prettier": "^10.1.8",

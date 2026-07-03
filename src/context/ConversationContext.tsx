@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, ReactNode, useEffect, useMemo } from 'react';
 import { ConversationState, ConversationData, ConversationMessage } from '../types/wordCloud';
 
 // localStorage key
@@ -154,10 +154,10 @@ interface ConversationProviderProps {
 export const ConversationProvider: React.FC<ConversationProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(conversationReducer, initialState);
 
-  // Save to localStorage whenever state changes
+  // Only persist conversations array — skip writes when only transient state changed
   useEffect(() => {
     saveConversationsToStorage(state);
-  }, [state]);
+  }, [state.conversations]);
 
   const addConversation = (conversation: ConversationData) => {
     dispatch({ type: 'ADD_CONVERSATION', payload: conversation });
@@ -208,7 +208,7 @@ export const ConversationProvider: React.FC<ConversationProviderProps> = ({ chil
       .flatMap(conv => conv.messages);
   };
 
-  const value: ConversationContextType = {
+  const value: ConversationContextType = useMemo(() => ({
     state,
     addConversation,
     updateConversation,
@@ -220,7 +220,8 @@ export const ConversationProvider: React.FC<ConversationProviderProps> = ({ chil
     loadFromStorage,
     getActiveConversations,
     getAllMessages,
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [state]);
 
   return (
     <ConversationContext.Provider value={value}>

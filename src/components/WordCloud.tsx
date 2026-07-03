@@ -1,9 +1,9 @@
-import React, { useRef, useState, useMemo, memo } from 'react';
+import React, { useRef, useState, useMemo, memo, useCallback } from 'react';
 import styled from 'styled-components';
 import { Word, WordCloud, WordCloudProps, AnimatedWordRenderer } from '@isoterik/react-word-cloud';
 import { WordCloudData, WordCloudConfig } from '../types/wordCloud';
 import { Button, VisualSizesEnum } from '@frontapp/ui-kit';
-import { FaDownload } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaClipboard, FaCheck } from 'react-icons/fa';
 import { useColorContext } from '../context/ColorContext';
 import { useSpiralContext } from '../context/SpiralContext';
 import { useRotationContext } from '../context/RotationContext';
@@ -59,6 +59,7 @@ const HelpText = styled.div`
   padding-top: 1rem;
 `;
 
+
 const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, className }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -66,10 +67,8 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
   const spiralContext = useSpiralContext();
   const rotationContext = useRotationContext();
   const stopWordsContext = useStopWordsContext();
-  const [downloadOptions] = useState({
-    transparent: true,
-    highQuality: true
-  });
+  const [isOpening, setIsOpening] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copying' | 'copied'> ('idle');
 
   // Memoize the words array to prevent unnecessary re-renders
   const words: Word[] = useMemo(() => {
@@ -154,9 +153,9 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
   }, []);
 
   // Handle word click to add word to stop words
-  const onWordClick = (word: Word) => {
+  const onWordClick = useCallback((word: Word) => {
     stopWordsContext.addStopWord(word.text);
-  };
+  }, [stopWordsContext.addStopWord]);
 
   // Memoize the entire WordCloud component to prevent unnecessary re-renders
   const memoizedWordCloud = useMemo(() => {
@@ -183,78 +182,109 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
     );
   }, [words, fillFunction, fontSizeFunction, rotationFunction, animatedWordRenderer, onWordClick, colorContext.state.colors, colorContext.state.gradientSteps, colorContext.state.colorMode, spiralContext.state.spiral, rotationContext.state.pattern, config.width, config.height, data]);
 
-  // Download PNG functionality
-  const downloadPNG = async () => {
-    if (!svgRef.current) return;
+  // Render the SVG to a high-res canvas and return a Blob
+  const renderToBlob = (): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      if (!svgRef.current) { reject(new Error('No SVG ref')); return; }
 
-    try {
-      // Get SVG element
       const svg = svgRef.current;
       const svgData = new XMLSerializer().serializeToString(svg);
-      
-      // Create high-resolution canvas
-      const scale = downloadOptions.highQuality ? 3 : 1; // 3x for high quality, 1x for normal
+      const scale = 3; // 3× for high-quality export
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) { reject(new Error('No canvas context')); return; }
 
-      // Set canvas size with higher resolution
       canvas.width = config.width * scale;
       canvas.height = config.height * scale;
-
-      // Scale the context for high DPI
       ctx.scale(scale, scale);
 
-      // Create image from SVG
-      const img = new Image();
       const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(svgBlob);
+      const svgUrl = URL.createObjectURL(svgBlob);
+      const img = new Image();
 
       img.onload = () => {
-        // Clear canvas
         ctx.clearRect(0, 0, config.width, config.height);
-        
-        // Add background if not transparent
-        if (!downloadOptions.transparent) {
-          ctx.fillStyle = config.backgroundColor;
-          ctx.fillRect(0, 0, config.width, config.height);
-        }
-        
-        // Draw image on canvas
         ctx.drawImage(img, 0, 0, config.width, config.height);
-
-        // Convert to PNG with transparency and download
+        URL.revokeObjectURL(svgUrl);
         canvas.toBlob((blob) => {
-          if (blob) {
-            const link = document.createElement('a');
-            link.download = `word-cloud-${new Date().toISOString().split('T')[0]}.png`;
-            link.href = URL.createObjectURL(blob);
-            link.click();
-            URL.revokeObjectURL(link.href);
-          }
+          if (blob) resolve(blob);
+          else reject(new Error('toBlob returned null'));
         }, 'image/png');
-
-        URL.revokeObjectURL(url);
       };
 
-      img.src = url;
+      img.onerror = () => {
+        URL.revokeObjectURL(svgUrl);
+        reject(new Error('Image load failed'));
+      };
+
+      img.src = svgUrl;
+    });
+  };
+
+  // Open the PNG as a blob URL in a new tab — works reliably from iframes
+  const openInNewTab = async () => {
+    if (isOpening) return;
+    setIsOpening(true);
+    try {
+      const blob = await renderToBlob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      // Revoke after a short delay to give the new tab time to load
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch (error) {
-      console.error('Error downloading PNG:', error);
+      console.error('Error opening image:', error);
+    } finally {
+      setIsOpening(false);
     }
   };
 
+  // Copy the PNG directly to the clipboard
+  const copyToClipboard = async () => {
+    if (copyStatus !== 'idle') return;
+    setCopyStatus('copying');
+    try {
+      const blob = await renderToBlob();
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      setCopyStatus('copied');
+      setTimeout(() => setCopyStatus('idle'), 2500);
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      setCopyStatus('idle');
+    }
+  };
+
+  const clipboardSupported = typeof navigator !== 'undefined'
+    && !!navigator.clipboard
+    && typeof ClipboardItem !== 'undefined';
+
   return (
+    <>
     <WordCloudContainer ref={containerRef} config={config} className={className}>
       <WordCloudWrapper>
-        <DownloadButtonContainer>
-          <Button
-            size={VisualSizesEnum.SMALL}
-            onClick={downloadPNG}
-          >
-            <FaDownload style={{ marginRight: '0.5rem' }} />
-            Download PNG
-          </Button>
-        </DownloadButtonContainer>
+        {data && data.length > 0 && (
+          <DownloadButtonContainer>
+            <Button
+              size={VisualSizesEnum.SMALL}
+              onClick={openInNewTab}
+              isDisabled={isOpening}
+            >
+              <FaExternalLinkAlt style={{ marginRight: '0.5rem' }} />
+              {isOpening ? 'Opening…' : 'Open Image'}
+            </Button>
+            {clipboardSupported && (
+              <Button
+                size={VisualSizesEnum.SMALL}
+                onClick={copyToClipboard}
+                isDisabled={copyStatus !== 'idle'}
+              >
+                {copyStatus === 'copied'
+                  ? <FaCheck style={{ marginRight: '0.5rem' }} />
+                  : <FaClipboard style={{ marginRight: '0.5rem' }} />}
+                {copyStatus === 'copied' ? 'Copied!' : copyStatus === 'copying' ? 'Copying…' : 'Copy to Clipboard'}
+              </Button>
+            )}
+          </DownloadButtonContainer>
+        )}
         {memoizedWordCloud || (
           <div style={{ 
             display: 'flex', 
@@ -276,7 +306,9 @@ const WordCloudComponent: React.FC<WordCloudComponentProps> = ({ data, config, c
         </HelpTextContainer>
       </WordCloudWrapper>
     </WordCloudContainer>
+    </>
   );
+
 };
 
 // Memoize the entire component to prevent unnecessary re-renders
